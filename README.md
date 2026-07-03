@@ -2,53 +2,90 @@
 
 **Live app:** https://lumen.edgeone.cool · **Built for the Agent Forge Mini Hackathon** (AI Builders × Tencent EdgeOne Makers, AI Engineer World's Fair SF)
 
-**Submission:** [🎬 90-second demo video](docs/lumen-demo.mp4) · [📑 slide deck (PDF, 8 pages)](docs/lumen-deck.pdf) · [🌐 deployed on EdgeOne Makers](https://lumen.edgeone.cool)
+**Submission:** [🎬 demo video](docs/lumen-demo.mp4) ([transcript](docs/VIDEO-TRANSCRIPT.md)) · [📑 slide deck (PDF, 8 pages)](docs/lumen-deck.pdf) · [🌐 deployed on EdgeOne Makers](https://lumen.edgeone.cool)
 
-Lumen is an **edge-native accessibility agent**. Paste any URL and it fetches the page at the Tencent EdgeOne node nearest to you, strips the clutter, and rebuilds it as a clean, plain-language reading view a screen reader can actually navigate — then answers questions about the page, following links on its own when it needs to.
+Lumen is an accessibility agent that runs inside a Tencent EdgeOne edge function. You give it a URL; it fetches the page, extracts the real content, and uses EdgeOne's built-in LLM to rebuild the page as a plain-language reading view for screen-reader, low-vision, and cognitive-disability users. It can then answer questions about the page, opening links from the page as a tool when the answer isn't on the current page.
 
 ![Lumen reading view](docs/screenshot-read.png)
 
 ## The problem
 
-The WebAIM Million study finds accessibility failures on ~95% of top homepages — missing alt text, broken heading structure, unlabeled controls, walls of clutter. For the 285M+ people worldwide with visual impairment (and everyone with a cognitive or reading disability), most of the web is exhausting or unusable. Overlay widgets patch the symptoms on sites that opt in; nothing helps the *reader* on the sites that don't.
+The [WebAIM Million](https://webaim.org/projects/million/) study (Feb 2024, automated scan of the top 1,000,000 home pages) detected WCAG failures on **95.9%** of them — averaging ~57 errors per page: missing alt text, empty links, missing form labels, low contrast. Roughly [285 million people worldwide](https://www.who.int/news-room/fact-sheets/detail/blindness-and-visual-impairment) live with visual impairment, and many more have cognitive or reading disabilities. Accessibility-overlay products only affect sites that install them; they do nothing for a reader visiting a site that hasn't.
 
-Lumen flips the model: instead of waiting for every website to fix itself, it gives the reader an agent that repairs any page on demand.
+Lumen's approach is to fix the page for the reader at request time, on any site, rather than waiting for each site to fix itself.
 
 ## What it does
 
-1. **Reads any page** — fetches the URL from the nearest of EdgeOne's 3,200+ edge nodes, extracts real content, headings and links.
-2. **Rebuilds it for humans** — EdgeOne's built-in DeepSeek model rewrites the page into a summary, plain-language sections, a navigable page map, key actions, and flags accessibility traps it found.
-3. **Answers questions like an agent** — "Where do I sign up?", "What does this cost?" It can decide to open a link from the page (a visible tool call) to find the answer, then reports what it did.
-4. **Practices what it preaches** — the UI itself is WCAG-minded: semantic landmarks, aria-live announcements, keyboard shortcuts, high-contrast mode, adjustable type, built-in text-to-speech.
+1. **Reads any page** — fetches the URL from an EdgeOne edge node and extracts content, headings, and links.
+2. **Rebuilds it** — EdgeOne's built-in DeepSeek model produces a summary, plain-language sections, a page map, key actions, and any accessibility warnings it spots.
+3. **Answers questions** — for a question it can't answer from the current page, the agent may open a link that appears on the page (up to 3 hops), and it reports each link it opened.
+4. **Is itself accessible** — semantic landmarks, `aria-live` status, keyboard shortcuts, high-contrast mode, adjustable text size, and browser text-to-speech.
 
-## Architecture — 100% on EdgeOne Makers
+## Architecture — runs entirely on EdgeOne Makers
 
 ```mermaid
 flowchart LR
-    U[Reader / screen reader] --> P[EdgeOne Pages\nstatic UI]
-    P -->|POST /api/read, /api/ask| F[EdgeOne Edge Function\nedge-functions/api]
-    F -->|nearest-node fetch| W[(Any webpage)]
-    F -->|AI.chatCompletions\nbuilt-in DeepSeek| M[EdgeOne Edge AI]
+    U[Reader / screen reader] --> P[EdgeOne Pages - static UI]
+    P -->|POST /api/read, /api/ask| F[EdgeOne Edge Function]
+    F -->|fetch + SSRF guard| W[(Any webpage)]
+    F -->|AI.chatCompletions - built-in DeepSeek| M[EdgeOne Edge AI]
     F -->|cache reading views| K[(EdgeOne KV)]
     F -->|request.eo geo| G[Edge node metadata]
 ```
 
-No origin server, no API keys, no cold starts: the entire product is static assets plus one edge function.
+The whole product is static assets plus one edge function — no origin server and no API keys.
 
 | EdgeOne Makers product | How Lumen uses it |
 |---|---|
-| **Pages hosting** | Serves the accessible UI globally with CDN acceleration |
+| **Pages hosting** | Serves the static UI on EdgeOne's global network |
 | **Edge Functions** | Runs the whole agent: fetch → extract → rewrite → answer |
-| **Edge AI (built-in DeepSeek)** | Page rewriting and agentic Q&A via the `AI.chatCompletions` global — zero keys, with automatic fallback across `deepseek-v4 → v32 → v3-0324` |
-| **KV storage** | Caches rebuilt pages (24h TTL) so any repeat reader worldwide gets an instant response *(pending account approval; code degrades gracefully)* |
-| **Geo metadata (`request.eo`)** | Shows which edge node served you — the latency story, visible in the footer |
-| **EdgeOne CLI + API token** | Headless CI-style deploys (`edgeone pages deploy`) |
+| **Edge AI (built-in DeepSeek)** | Rewriting and Q&A via the `AI.chatCompletions` global — no key; falls back across `deepseek-v4 → v32 → v3-0324` |
+| **KV storage** | Caches reading views (24h TTL) so a repeat request is served without re-running the model. **Optional:** the app runs without it and reports its status at `/api/health` (`"kv": true/false`) |
+| **Geo metadata (`request.eo`)** | Reports which node served the request; shown in the footer and at `/api/health` |
+| **EdgeOne CLI + API token** | Headless deploys (`edgeone pages deploy`) |
 
-### Why the edge matters here
+EdgeOne states its network spans [3,200+ edge nodes](https://edgeone.ai/); Lumen relies on that network for the fetch and for hosting rather than measuring it itself.
 
-- **Latency is accessibility.** Screen-reader users hear pages serially; every second of waiting costs more than it does for sighted users. Nearest-node fetching + KV caching keep Lumen fast everywhere.
-- **Shared memory.** One reader's rebuilt page becomes every reader's instant page — a global, communal cache of accessible views.
-- **Zero infrastructure.** The built-in model gateway means no backend, no keys to leak, nothing to scale.
+### Verify it works (about 60 seconds)
+
+```bash
+# 1. Health + which edge node served you + whether KV is enabled
+curl -s https://lumen.edgeone.cool/api/health | jq
+
+# 2. Rebuild a page (returns the structured reading view)
+curl -s -X POST https://lumen.edgeone.cool/api/read \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://en.wikipedia.org/wiki/Screen_reader"}' | jq '.view.summary, .view.sections[0].heading'
+
+# 3. Ask a question about that page
+curl -s -X POST https://lumen.edgeone.cool/api/ask \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://en.wikipedia.org/wiki/Screen_reader","question":"What are the main types of screen reader?"}' | jq '.answer, .steps'
+
+# 4. Confirm the SSRF guard rejects internal targets (expect an error, HTTP 400)
+curl -s -X POST https://lumen.edgeone.cool/api/read \
+  -H 'content-type: application/json' \
+  -d '{"url":"http://169.254.169.254/latest/meta-data/"}'
+```
+
+## Security
+
+Because the edge function fetches user-supplied URLs, it is guarded against server-side request forgery (SSRF):
+
+- Only `http`/`https`, no embedded credentials, and a small port allow-list.
+- Requests to loopback, private (`10/8`, `172.16/12`, `192.168/16`, `100.64/10`), link-local **including the `169.254.169.254` cloud-metadata address**, multicast/reserved ranges, and IPv6 loopback/ULA/link-local are rejected — as are `localhost`, `*.local`, `*.internal`, `metadata.google.internal`, and numeric/hex IP encodings.
+- Redirects are followed **manually and each hop is re-validated**, so a public URL cannot redirect into an internal one.
+- Known limitation: the edge runtime doesn't expose a DNS resolver, so this does not by itself prevent DNS-rebinding (a hostname that resolves to a public address on check and a private one on fetch). Mitigating that needs address pinning at the platform layer.
+
+The guard is covered by unit tests (`test/lumen.test.mjs`).
+
+## Tests
+
+Pure logic (SSRF guard, HTML extraction, model-output parsing) is unit-tested with the Node test runner — no dependencies, and it runs in CI on every push (`.github/workflows/ci.yml`):
+
+```bash
+npm test   # node --test
+```
 
 ## Run it yourself
 
@@ -58,33 +95,38 @@ edgeone login -s global -t <your EdgeOne Pages API token>
 edgeone pages deploy . -n <project-name>
 ```
 
-That's the entire pipeline — the repo deploys as-is. (Optionally bind a KV namespace named `lumen_kv` in the Makers console to enable the shared cache.)
+Optionally bind a KV namespace named `lumen_kv` in the Makers console to enable the cache.
 
 ## API
 
 | Endpoint | Body | Returns |
 |---|---|---|
-| `POST /api/read` | `{ "url": "https://…" }` | `{ title, headings[], view: { summary, sections[], keyActions[], warnings[] } }` |
-| `POST /api/ask` | `{ "url", "question", "history[] }` | `{ answer, steps[] }` — `steps` lists any links the agent opened |
-| `GET /api/health` | — | Edge node geo, model list, KV status |
+| `POST /api/read` | `{ "url": "https://…" }` | `{ url, title, lang, headings[], view: { summary, readingTimeMin, sections[], keyActions[], warnings[] } }` |
+| `POST /api/ask` | `{ "url", "question", "history"[] }` | `{ answer, steps[] }` — `steps` lists the links the agent opened |
+| `GET /api/health` | — | `{ node, models[], kv, time }` |
+
+Invalid or blocked URLs return `{ "error": "…" }` with HTTP 400.
 
 ## Project structure
 
 ```
-index.html                      accessible UI (no build step, loads instantly)
-assets/style.css                flat, AAA-contrast design system
-assets/app.js                   reading view, Q&A thread, TTS, shortcuts
-edge-functions/api/[[default]].js  the agent: fetch, extract, rewrite, answer, cache
+index.html                         accessible UI (no build step)
+assets/style.css                   flat, high-contrast styles
+assets/app.js                      reading view, Q&A thread, TTS, shortcuts
+edge-functions/api/[[default]].js  the agent: SSRF-guarded fetch, extract, rewrite, answer, cache
+test/lumen.test.mjs                unit tests for the pure helpers
+.github/workflows/ci.yml           runs the tests on every push
 ```
 
-## Honest limitations
+## Limitations
 
-- Free built-in models have daily quotas; Lumen rotates across three DeepSeek variants and reports clearly when exhausted.
-- Sites that block server-side fetching (aggressive bot walls) can't be rebuilt; Lumen says so instead of hallucinating.
-- Heavy client-side-rendered apps expose less static content to rebuild.
+- **HTML extraction is a regex-based heuristic, not a DOM parser.** Edge functions have a ~200ms CPU budget and no DOM, so extraction favours resilience (it never throws on malformed markup) over perfect fidelity on deeply nested pages. Tested against malformed input; see `test/`.
+- **Heavy client-rendered apps** expose little static HTML, so there's less for Lumen to rebuild.
+- **Free built-in models have daily quotas.** Lumen rotates across three DeepSeek variants and reports clearly when they're exhausted.
+- **Sites with aggressive bot protection** may refuse the server-side fetch; Lumen returns the error rather than inventing content.
 
 ## Team
 
-Pranav Achar — [github.com/PranavAchar01](https://github.com/PranavAchar01). Lumen continues the accessibility thread of my earlier work (Pathfinder, an edge-first web navigation aid for blind users).
+Pranav Achar — [github.com/PranavAchar01](https://github.com/PranavAchar01). Related earlier work: Pathfinder, an edge-first web navigation aid for blind users.
 
 MIT licensed.

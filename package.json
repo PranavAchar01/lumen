@@ -1,0 +1,11 @@
+{
+  "name": "lumen",
+  "version": "1.0.0",
+  "description": "Edge accessibility agent on Tencent EdgeOne Makers",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

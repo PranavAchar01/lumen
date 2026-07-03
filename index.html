@@ -29,7 +29,7 @@
 <main id="main" class="wrap" role="main">
   <section aria-labelledby="how-title">
     <h1 id="how-title">Paste a link. Get a page you can actually read.</h1>
-    <p class="lede">Lumen fetches any webpage at the Tencent EdgeOne node nearest to you, strips the clutter,
+    <p class="lede">Lumen fetches any webpage inside a Tencent EdgeOne edge function, strips the clutter,
     and rebuilds it as a clean, plain-language reading view — with headings, landmarks and actions a screen
     reader can navigate. Then ask it anything about the page.</p>
 
@@ -99,9 +99,9 @@
   <section class="edge-story" aria-labelledby="whyTitle">
     <h2 id="whyTitle">Why this runs at the edge</h2>
     <div class="grid3">
-      <div class="card"><h3>Nearest-node fetch</h3><p>Pages are fetched and cleaned on one of EdgeOne’s 3,200+ nodes — the copy closest to you, not a distant server.</p></div>
+      <div class="card"><h3>Edge-node fetch</h3><p>Pages are fetched and cleaned inside an EdgeOne edge function running on EdgeOne's global network — with an SSRF guard on every URL.</p></div>
       <div class="card"><h3>Built-in edge AI</h3><p>Rewriting happens with EdgeOne’s built-in DeepSeek models, invoked directly inside the edge function. No keys, no backend.</p></div>
-      <div class="card"><h3>Shared KV memory</h3><p>Every page Lumen rebuilds is cached in EdgeOne KV, so the next reader anywhere in the world gets it instantly.</p></div>
+      <div class="card"><h3>Shared KV cache</h3><p>Reading views are cached in EdgeOne KV (when enabled), so a repeat request is served without re-running the model.</p></div>
     </div>
   </section>
 </main>

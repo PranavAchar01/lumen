@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumen — the web, readable for everyone</title>
+<meta name="description" content="Lumen is an edge accessibility agent: paste any URL and get a clean, screen-reader-ready version of the page, then ask questions about it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23111'/%3E%3Cpath d='M16 5a11 11 0 100 22V5z' fill='%23FFD84D'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header role="banner">
+  <div class="wrap bar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">◐</span>
+      <span class="name">Lumen</span>
+      <span class="tag">the web, readable for everyone</span>
+    </div>
+    <div class="controls" role="group" aria-label="Display settings">
+      <button id="fontDown" type="button" aria-label="Decrease text size">A−</button>
+      <button id="fontUp" type="button" aria-label="Increase text size">A+</button>
+      <button id="contrast" type="button" aria-pressed="false">High contrast</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap" role="main">
+  <section aria-labelledby="how-title">
+    <h1 id="how-title">Paste a link. Get a page you can actually read.</h1>
+    <p class="lede">Lumen fetches any webpage at the Tencent EdgeOne node nearest to you, strips the clutter,
+    and rebuilds it as a clean, plain-language reading view — with headings, landmarks and actions a screen
+    reader can navigate. Then ask it anything about the page.</p>
+
+    <form id="readForm" aria-label="Read a webpage">
+      <label for="url" class="visually-hidden">Webpage address</label>
+      <input id="url" name="url" type="url" inputmode="url" placeholder="https://example.com/article"
+             autocomplete="url" required>
+      <button id="readBtn" type="submit">Make it readable</button>
+    </form>
+
+    <div class="samples" aria-label="Example pages">
+      <span>Try:</span>
+      <button type="button" class="chip" data-url="https://en.wikipedia.org/wiki/Screen_reader">Wikipedia: Screen reader</button>
+      <button type="button" class="chip" data-url="https://developer.mozilla.org/en-US/docs/Web/Accessibility">MDN: Accessibility</button>
+      <button type="button" class="chip" data-url="https://www.w3.org/WAI/fundamentals/accessibility-intro/">W3C: Intro to a11y</button>
+    </div>
+  </section>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <section id="result" hidden aria-labelledby="resultTitle">
+    <div class="result-head">
+      <h2 id="resultTitle"></h2>
+      <div class="result-tools">
+        <button id="listen" type="button">🔊 Listen</button>
+        <span id="meta" class="meta"></span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <article aria-label="Readable version">
+        <div class="card summary">
+          <h3>In short</h3>
+          <p id="summary"></p>
+        </div>
+        <div id="sections"></div>
+      </article>
+
+      <aside aria-label="Page map and actions">
+        <div class="card">
+          <h3>Page map</h3>
+          <nav aria-label="Original page outline"><ol id="outline"></ol></nav>
+        </div>
+        <div class="card">
+          <h3>Things you can do here</h3>
+          <ul id="actions" class="actions"></ul>
+        </div>
+        <div class="card" id="warnCard" hidden>
+          <h3>Accessibility warnings</h3>
+          <ul id="warnings"></ul>
+        </div>
+      </aside>
+    </div>
+
+    <section class="ask" aria-labelledby="askTitle">
+      <h3 id="askTitle">Ask Lumen about this page</h3>
+      <div id="thread" aria-live="polite"></div>
+      <form id="askForm">
+        <label for="q" class="visually-hidden">Your question</label>
+        <input id="q" type="text" placeholder='e.g. "What are the main points?" or "Where do I sign up?"' maxlength="500">
+        <button type="submit">Ask</button>
+      </form>
+      <p class="hint">Press <kbd>/</kbd> anywhere to jump here. Lumen can open links from the page to find answers — you’ll see when it does.</p>
+    </section>
+  </section>
+
+  <section class="edge-story" aria-labelledby="whyTitle">
+    <h2 id="whyTitle">Why this runs at the edge</h2>
+    <div class="grid3">
+      <div class="card"><h3>Nearest-node fetch</h3><p>Pages are fetched and cleaned on one of EdgeOne’s 3,200+ nodes — the copy closest to you, not a distant server.</p></div>
+      <div class="card"><h3>Built-in edge AI</h3><p>Rewriting happens with EdgeOne’s built-in DeepSeek models, invoked directly inside the edge function. No keys, no backend.</p></div>
+      <div class="card"><h3>Shared KV memory</h3><p>Every page Lumen rebuilds is cached in EdgeOne KV, so the next reader anywhere in the world gets it instantly.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer role="contentinfo">
+  <div class="wrap">
+    <p id="edgeInfo">Running on Tencent EdgeOne…</p>
+    <p>Built for the Agent Forge Mini Hackathon · <a href="https://github.com/PranavAchar01/lumen" rel="noopener">Source on GitHub</a></p>
+  </div>
+</footer>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

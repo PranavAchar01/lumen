@@ -2,6 +2,8 @@
 
 **Live app:** https://lumen.edgeone.cool · **Built for the Agent Forge Mini Hackathon** (AI Builders × Tencent EdgeOne Makers, AI Engineer World's Fair SF)
 
+**Submission:** [🎬 90-second demo video](docs/lumen-demo.mp4) · [📑 slide deck (PDF, 8 pages)](docs/lumen-deck.pdf) · [🌐 deployed on EdgeOne Makers](https://lumen.edgeone.cool)
+
 Lumen is an **edge-native accessibility agent**. Paste any URL and it fetches the page at the Tencent EdgeOne node nearest to you, strips the clutter, and rebuilds it as a clean, plain-language reading view a screen reader can actually navigate — then answers questions about the page, following links on its own when it needs to.
 
 ![Lumen reading view](docs/screenshot-read.png)

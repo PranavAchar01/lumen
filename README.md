@@ -1,5 +1,7 @@
 # ◐ Lumen — the web, readable for everyone
 
+> 🏆 **Top 5 — Agent Forge Mini Hackathon** (AI Builders × Tencent EdgeOne Makers, AI Engineer World's Fair SF)
+
 **Live app:** https://lumen.edgeone.cool · **Built for the Agent Forge Mini Hackathon** (AI Builders × Tencent EdgeOne Makers, AI Engineer World's Fair SF)
 
 **Submission:** [🎬 demo video](docs/lumen-demo.mp4) ([transcript](docs/VIDEO-TRANSCRIPT.md)) · [📑 slide deck (PDF, 8 pages)](docs/lumen-deck.pdf) · [🌐 deployed on EdgeOne Makers](https://lumen.edgeone.cool)
